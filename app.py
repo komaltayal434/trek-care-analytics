@@ -114,7 +114,7 @@ def mynotes(key): st.text_area("My notes: what I understood (write in your own w
 def models():
     mk = lambda m: Pipeline([('s', StandardScaler()), ('m', m)])
     return {
-        'Logistic Regression': (mk(LogisticRegression(max_iter=3000)), {'m__C': [.01, .1, 1, 10], 'm__penalty': ['l1', 'l2'], 'm__solver': ['liblinear']}),
+        'Logistic Regression': (mk(LogisticRegression(max_iter=3000, solver='lbfgs')), {'m__C': [.1, 1, 10]}),
         'KNN': (mk(KNeighborsClassifier()), {'m__n_neighbors': [5, 11, 21, 31, 51], 'm__weights': ['uniform', 'distance']}),
         'Decision Tree': (DecisionTreeClassifier(random_state=1), {'max_depth': [3, 5, 7, 10], 'min_samples_leaf': [5, 20, 50], 'criterion': ['gini', 'entropy']}),
         'Random Forest': (RandomForestClassifier(random_state=1), {'n_estimators': [200, 400], 'max_depth': [6, 10, None], 'min_samples_leaf': [1, 5]}),
@@ -131,7 +131,7 @@ def run_clf():
     rows, roc, cm, fitted = [], {}, {}, {}
     for n, (m, g) in models().items():
         base = accuracy_score(yt, m.fit(Xa, ya).predict(Xt))                       # default settings
-        gs = GridSearchCV(m, g, cv=5, scoring='accuracy', n_jobs=-1).fit(Xa, ya)  # tuning on TRAIN data only
+        gs = GridSearchCV(m, g, cv=5, scoring='accuracy', n_jobs=1).fit(Xa, ya)  # tuning on TRAIN data only
         b = gs.best_estimator_; p = b.predict(Xt)
         s = b.predict_proba(Xt)[:, 1] if hasattr(b, 'predict_proba') else b.decision_function(Xt)
         f, t, _ = roc_curve(yt, s); roc[n] = (f, t); cm[n] = confusion_matrix(yt, p); fitted[n] = b
